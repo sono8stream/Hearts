@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "1001978184694",
+    "firebase_url": "https://unitytablegame.firebaseio.com",
+    "project_id": "unitytablegame",
+    "storage_bucket": "unitytablegame.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1001978184694:android:881b05abb7bbc22d",
+        "android_client_info": {
+          "package_name": "com.SonoGames.Table"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1001978184694-6fpe6d8bm511auqufieof06oh8i3q5ou.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAn8ngzvyWyGxYp7xl6ZMj9TeyK-Re1R54"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
