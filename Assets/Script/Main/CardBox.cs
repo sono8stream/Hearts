@@ -30,10 +30,7 @@ public class CardBox : MonoBehaviour
 
     private void Update()
     {
-        /*if (Input.GetKeyDown(KeyCode.Space))
-        {
-            SpeedTester.Test(() => { RealShuffle(50); }, () => { RandomShuffle(); });
-        }*/
+
     }
 
     public void SyncCardObjects()
@@ -62,6 +59,7 @@ public class CardBox : MonoBehaviour
         }
     }
 
+    #region View Methods
     public void StackView()
     {
         int cardCnt = cardObjects.Count;
@@ -69,7 +67,8 @@ public class CardBox : MonoBehaviour
         float margine = 1;
         for (int i = 0; i < cardCnt; i++)
         {
-            cardObjects[i].GetComponent<RectTransform>().anchoredPosition = pos;
+            cardObjects[i].transform.localPosition = pos;
+            cardObjects[i].transform.localEulerAngles = Vector3.zero;
             pos += Vector2.one * margine;
         }
     }
@@ -77,16 +76,32 @@ public class CardBox : MonoBehaviour
     public void ListView()
     {
         int cardCnt = cardObjects.Count;
-        Vector2 pos = Vector2.zero;
-        int height = 50;
-        int yLim = 13;
+        int width = 50;
+        int xLim = Count > 17 ? 17 : Count;
+        Vector2 iniPos = Vector2.left * width * (xLim - 1) * 0.5f;
+        Vector2 pos = iniPos;
         for (int i = 0; i < cardCnt; i++)
         {
-            if (i % yLim == 0) { pos = Vector2.right * 220 * (i / yLim); }
-            cardObjects[i].GetComponent<RectTransform>().anchoredPosition = pos;
-            pos += Vector2.down * height;
+            if (i % xLim == 0)
+            {
+                pos = iniPos + Vector2.down * 50 * (i / xLim);
+            }
+            cardObjects[i].transform.localPosition = pos;
+            cardObjects[i].transform.localEulerAngles = Vector3.zero;
+            pos += Vector2.right * width;
         }
         Debug.Log("Listed");
+    }
+    #endregion
+    
+    public void TurnAll()
+    {
+        int cardCnt = cards.Count;
+        for (int i = 0; i < cardCnt; i++)
+        {
+            cards[i].frontFace = !cards[i].frontFace;
+            cardObjects[i].GetComponent<Image>().sprite = cards[i].GetSprite();
+        }
     }
 
     /// <summary>
@@ -224,4 +239,49 @@ public class CardBox : MonoBehaviour
         box.Add(cards[cardIndex]);
         RemoveAt(cardIndex);
     }
+
+    #region Linq like Methods
+    public int CountAll(System.Predicate<Card> pred)
+    {
+        int cnt = 0;
+        int cardCnt = Count;
+        for(int i = 0; i < Count; i++)
+        {
+            if (pred(cards[i]))
+            {
+                cnt++;
+            }
+        }
+        return cnt;
+    }
+    
+    /// <summary>
+    /// 条件に合うものが無ければ、-1を返す
+    /// </summary>
+    /// <param name="pred">条件関数</param>
+    /// <returns></returns>
+    public List<int> IndexListWhere(System.Predicate<Card> pred)
+    {
+        List<int> targetIndexList = new List<int>();
+        int cardCnt = Count;
+        for (int i = 0; i < Count; i++)
+        {
+            if (pred(cards[i]))
+            {
+                targetIndexList.Add(i);
+            }
+        }
+        return targetIndexList;
+    }
+
+    public void RemoveAll(System.Predicate<Card> pred)
+    {
+        int[] removeIndexList = IndexListWhere(pred).ToArray();
+        int removeCount = removeIndexList.Length;
+        for(int i = 0; i < removeCount; i++)
+        {
+            RemoveAt(removeIndexList[i] - i);
+        }
+    }
+    #endregion
 }

@@ -5,9 +5,7 @@ using UnityEngine;
 public class GamePlayer : MonoBehaviour
 {
     public bool onMyTurn;
-
-    [SerializeField]
-    CardBox handCards;
+    public CardBox handCards;
 
     CardBox fieldBox;
 
@@ -22,11 +20,29 @@ public class GamePlayer : MonoBehaviour
     {
         if (!onMyTurn) return;
 
-
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            EndMyTurn();
+        }
     }
 
     public void SetCard(Card c)
     {
         handCards.Add(c);
     }
+
+    void DiscardField()
+    {
+
+    }
+
+    void EndMyTurn()
+    {
+        onMyTurn = false;
+    }
+}
+
+enum PlayerState
+{
+
 }
