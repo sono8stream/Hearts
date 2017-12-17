@@ -35,8 +35,8 @@ static class EnumHelper
         return Enum.GetNames(typeof(Type)).Length;
     }
 
-    public static int No<Type>(this Type type) where Type : struct
+    /*public static int No<Type>(this Type type) where Type : struct
     {
         return (int)Enum.Parse(typeof(Type), type.ToString());
-    }
+    }*/
 }

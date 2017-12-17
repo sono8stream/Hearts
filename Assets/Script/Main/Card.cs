@@ -20,12 +20,18 @@ public class Card
         ResourceLoader rl = GameObject.Find("Resource").GetComponent<ResourceLoader>();
         if (frontFace)
         {
-            return rl.trumpSprites[markNo * 13 + value - 1];
+            int valTemp = value == 14 ? 0 : value-1;//aceかどうか
+            return rl.trumpSprites[markNo * 13 + valTemp];
         }
         else
         {
             return rl.trumpReverseSprite;
         }
+    }
+
+    public bool IsMatch(int mNo,int val)
+    {
+        return markNo == mNo && value == val;
     }
 }
 

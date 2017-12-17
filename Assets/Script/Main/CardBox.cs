@@ -92,6 +92,11 @@ public class CardBox : MonoBehaviour
         }
         Debug.Log("Listed");
     }
+
+    public void EmphasizeOne(int index)
+    {
+        cardObjects[index].transform.localPosition += Vector3.up * 30;
+    }
     #endregion
     
     public void TurnAll()
