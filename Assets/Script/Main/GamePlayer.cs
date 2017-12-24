@@ -5,6 +5,7 @@ using UnityEngine.UI;
 
 public class GamePlayer : MonoBehaviour
 {
+    public int myNo;
     public int stateNo = (int)PlayerState.Idle;
     public CardBox handCards;
 
@@ -17,12 +18,15 @@ public class GamePlayer : MonoBehaviour
     int[] selectableIndexes;
     int totalScore;
     int nowGameScore;
+    FirebaseConnector handDB;
 
     // Use this for initialization
     void Start()
     {
         master = GameObject.Find("GameMaster").GetComponent<GameMaster>();
         fieldBox = master.fieldCards;
+
+        handDB = new FirebaseConnector("player" + myNo.ToString() + "/handCards");
     }
 
     // Update is called once per frame
@@ -31,9 +35,12 @@ public class GamePlayer : MonoBehaviour
         switch (stateNo)
         {
             case (int)PlayerState.SetUp:
+                PrepareNewPlay();
+                stateNo = (int)PlayerState.Idle;
                 break;
             case (int)PlayerState.BeginMyPhase:
                 GetSelectableIndexes();
+                handCards.Highlight(selectableIndexes);
                 handCards.EmphasizeOne(selectableIndexes[selectIndex]);
                 stateNo = (int)PlayerState.MyPhase;
                 break;
@@ -46,8 +53,15 @@ public class GamePlayer : MonoBehaviour
                 handCards.ListView();
                 break;
             case (int)PlayerState.Idle:
+
                 break;
         }
+    }
+
+    public void PrepareNewPlay()
+    {
+        handCards.ListView();
+        UpdateHandDB();
     }
 
     void GetSelectableIndexes()
@@ -68,15 +82,8 @@ public class GamePlayer : MonoBehaviour
         if (tempIndexList.Count > 0)
         {
             selectableIndexes = tempIndexList.ToArray();
-            return;
         }
-
-        selectableIndexes = handCards.IndexListWhere((c) =>
-        {
-            return master.onHeartBreak || c.markNo != (int)MarkName.heart;
-        }).ToArray();
-
-        if (selectableIndexes.Length == 0)
+        else
         {
             selectableIndexes = handCards.IndexListWhere((c) => { return true; }).ToArray();
         }
@@ -100,15 +107,41 @@ public class GamePlayer : MonoBehaviour
         {
             handCards.MoveTo(ref fieldBox, selectableIndexes[selectIndex]);
             fieldBox.ListView();
+            UpdateHandDB();
             Debug.Log("Summon");
             return true;
         }
         return false;
     }
 
-    void DiscardField(int index)
+    void UpdateHandDB()
     {
+        int dataCnt = handDB.dataMap.Count;
+        int handCnt = handCards.Count;
+        for (int i = 0; i < dataCnt || i < handCnt; i++)
+        {
+            if (i >= handCnt)
+            {
+                handDB.RemoveItem("card" + i.ToString());
+            }
+            else
+            {
+                Dictionary<string, object> itemMap = new Dictionary<string, object>();
+                itemMap.Add("markNo", handCards[i].markNo);
+                itemMap.Add("value", handCards[i].value);
 
+                if(i>=dataCnt)
+                {
+                    handDB.dataMap.Add("card" + i.ToString(), itemMap);
+                }
+                else
+                {
+                    handDB.dataMap["card" + i.ToString()] = itemMap;
+                }
+            }
+        }
+
+        handDB.AsyncMap();
     }
 
     public void AddScore(int point)

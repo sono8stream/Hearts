@@ -5,18 +5,6 @@ using UnityEngine;
 
 static class EnumHelper
 {
-    // Gender に対する拡張メソッドの定義
-    public static string GetName<Type>(this Type type) where Type : struct
-    {
-        if (Enum.IsDefined(typeof(Type), type))
-        {
-            return Enum.GetName(typeof(Type), type);
-        }
-        else
-        {
-            return "";
-        }
-    }
 
     public static string Name<Type>(this int markNo) where Type : struct
     {

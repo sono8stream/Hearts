@@ -17,24 +17,80 @@ public class GameMaster : MonoBehaviour
     [SerializeField]
     CardBox talonCards;
 
-    int turnCnt;
-    int playerCnt = 5;
+    int trickCnt;
+    int trickLimit;
+    int playerCnt = 4;
     int nowPlayerNo;
     int lastPlayerNo;
-    float playerRadius = 400;
+    int playCnt;
+    int stateNo;
+
     List<GamePlayer> players;
+    FirebaseConnector connector;
     #endregion
 
     // Use this for initialization
     void Start()
     {
-        SetUpGame();
+        connector = new FirebaseConnector("Master/card0");
+
+        playCnt = 0;
+        InvitePlayers();
+        NewPlay();
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (players[nowPlayerNo].stateNo == (int)PlayerState.Idle)
+        Debug.Log(stateNo.Name<MasterState>());
+
+        switch (stateNo)
+        {
+            case (int)MasterState.SetUp:
+                if (players[nowPlayerNo].stateNo == (int)PlayerState.SetUp) return;
+                stateNo = (int)MasterState.TrickBegin;
+                break;
+
+            case (int)MasterState.TrickBegin:
+                players[nowPlayerNo].stateNo = (int)PlayerState.BeginMyPhase;
+                stateNo = (int)MasterState.OnTrick;
+                break;
+
+            case (int)MasterState.OnTrick:
+                if (players[nowPlayerNo].stateNo != (int)PlayerState.Idle) return;
+
+                if (!onHeartBreak && fieldCards.Count > 0
+                    && fieldCards[fieldCards.Count - 1].markNo == (int)MarkName.heart)
+                {
+                    onHeartBreak = true;
+                }
+
+                if (nowPlayerNo == lastPlayerNo)
+                {
+                    stateNo = (int)MasterState.TrickEnd;
+                }
+                else
+                {
+                    nowPlayerNo = nowPlayerNo == playerCnt - 1 ? 0 : nowPlayerNo + 1;
+                    players[nowPlayerNo].stateNo = (int)PlayerState.BeginMyPhase;
+                }
+                break;
+
+            case (int)MasterState.TrickEnd:
+                EndTrick();
+                if (trickCnt >= trickLimit)
+                {
+                    NewPlay();
+                }
+                else
+                {
+                    stateNo = (int)MasterState.TrickBegin;
+                }
+                break;
+        }
+
+
+        /*if (players[nowPlayerNo].stateNo == (int)PlayerState.Idle)
         {
             if (!onHeartBreak && fieldCards.Count > 0
                 && fieldCards[fieldCards.Count - 1].markNo == (int)MarkName.heart)
@@ -44,7 +100,12 @@ public class GameMaster : MonoBehaviour
 
             if (nowPlayerNo == lastPlayerNo)
             {
-                EndTurn();
+                trickCnt++;
+                EndTrick();
+                if (trickCnt >= trickLimit)
+                {
+                    NewPlay();
+                }
             }
             else
             {
@@ -52,8 +113,7 @@ public class GameMaster : MonoBehaviour
             }
 
             players[nowPlayerNo].stateNo = (int)PlayerState.BeginMyPhase;
-            Debug.Log(nowPlayerNo);
-        }
+        }*/
     }
 
     #region Test Methods
@@ -76,23 +136,24 @@ public class GameMaster : MonoBehaviour
         deckCards.MoveTo(ref fieldCards, deckCnt - 1);
         fieldCards.ListView();
     }
-#endregion
+    #endregion
 
-    void SetUpGame()
+    void NewPlay()
     {
         AddTrumpSetToDeck();
-        deckCards.RandomShuffle();
         deckCards.SyncCardObjects();
         deckCards.TurnAll();
-        deckCards.ListView();
-        InvitePlayers();
         ExcludeCards();
-        ServeCards(false);
-        for (int i = 0; i < playerCnt; i++)
+        ServeCards(true);
+
+        for(int i = 0; i < playerCnt; i++)
         {
-            players[i].handCards.ListView();
+            players[i].stateNo = (int)PlayerState.SetUp;
         }
-        players[nowPlayerNo].stateNo = (int)PlayerState.BeginMyPhase;
+        trickCnt = 0;
+        nowPlayerNo = playCnt;
+        lastPlayerNo = nowPlayerNo == 0 ? playerCnt - 1 : nowPlayerNo - 1;
+        stateNo = (int)MasterState.SetUp;
     }
 
     #region Setup Methods
@@ -153,35 +214,34 @@ public class GameMaster : MonoBehaviour
 
             g.transform.localPosition = (Vector2)playerPoses[i];
             g.transform.localEulerAngles = Vector3.forward * playerPoses[i].z;
-
+            g.transform.Find("hand").localEulerAngles = Vector3.zero;
             g.transform.localScale = Vector3.one;
-            players.Add(g.GetComponent<GamePlayer>());
+            GamePlayer player= g.GetComponent<GamePlayer>();
+            player.myNo = i;
+            players.Add(player);
         }
-
-        lastPlayerNo = playerCnt - 1;
-        nowPlayerNo = 0;
     }
 
     Vector3[] SetPlayerPoses()
     {
         List<Vector3> poses = new List<Vector3>();
-        poses.Add(new Vector3(0, -400, 0));
-        poses.Add(new Vector3(800, 0, 90));
-        poses.Add(new Vector3(-800, 0, 270));
+        poses.Add(new Vector3(0, -180, 0));
+        poses.Add(new Vector3(800, 150, 90));
+        poses.Add(new Vector3(-800, 150, 270));
 
         if (playerCnt >= 4)
         {
-            poses.Insert(2, new Vector3(0, 400, 180));
+            poses.Insert(2, new Vector3(0, 550, 180));
 
             if (playerCnt >= 5)
             {
-                poses[0] = new Vector3(-350, -400, 0);
-                poses.Insert(1, new Vector3(350, -400, 0));
+                poses[0] = new Vector3(-350, -180, 0);
+                poses.Insert(1, new Vector3(350, -180, 0));
 
                 if (playerCnt == maxPlayers)
                 {
-                    poses[3] = new Vector3(-350, 400, 180);
-                    poses.Insert(3, new Vector3(350, 400, 180));
+                    poses[3] = new Vector3(-350, 550, 180);
+                    poses.Insert(3, new Vector3(350, 550, 180));
                 }
             }
         }
@@ -190,6 +250,7 @@ public class GameMaster : MonoBehaviour
 
     void ServeCards(bool randomSelect)
     {
+        trickLimit = 0;
         int index;
         while (deckCards.Count > 0)
         {
@@ -198,25 +259,28 @@ public class GameMaster : MonoBehaviour
                 index = randomSelect ? Random.Range(0, deckCards.Count) : 0;
                 deckCards.MoveTo(ref players[i].handCards, index);
             }
+            trickLimit++;
         }
     }
     #endregion
 
-    void EndTurn()
+    void EndTrick()
     {
-        nowPlayerNo = TurnWinnerIndex();
+        nowPlayerNo = TrickWinnerIndex();
         players[nowPlayerNo].AddScore(GivenScore(nowPlayerNo));
+        //lastPlayerNo = (nowPlayerNo + playerCnt - 1) % playerCnt;
         lastPlayerNo = nowPlayerNo == 0 ? playerCnt - 1 : nowPlayerNo - 1;
         DiscardFieldCards();
-        Debug.Log("Discard");
     }
 
-    int TurnWinnerIndex()
+    int TrickWinnerIndex()
     {
         int index = 0;
         int markNo = fieldCards[0].markNo;
         int val = fieldCards[0].value;
         int fieldCardsCnt = fieldCards.Count;
+        int firstPlayerNo = (lastPlayerNo + 1) % playerCnt;
+
         for (int i = 1; i < fieldCardsCnt; i++)
         {
             if (markNo == fieldCards[i].markNo
@@ -226,7 +290,7 @@ public class GameMaster : MonoBehaviour
                 val = fieldCards[i].value;
             }
         }
-        return index;
+        return (firstPlayerNo + index) % playerCnt;
     }
 
     int GivenScore(int winnerIndex)
@@ -251,4 +315,9 @@ public class GameMaster : MonoBehaviour
             fieldCards.MoveTo(ref talonCards, 0);
         }
     }
+}
+
+public enum MasterState
+{
+    SetUp = 0, TrickBegin,OnTrick,TrickEnd
 }

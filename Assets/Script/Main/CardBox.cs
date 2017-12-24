@@ -17,13 +17,11 @@ public class CardBox : MonoBehaviour
     GameObject cardObjectOrigin;
     List<GameObject> cardObjects;
     List<Card> cards;
-    NetworkAdaptor adaptor;
 
     private void Awake()
     {
         cardObjects = new List<GameObject>();
         cards = new List<Card>();
-        adaptor = new NetworkAdaptor();
         cardObjectOrigin
             = GameObject.Find("Resource").GetComponent<ResourceLoader>().trumpOrigin;
     }
@@ -97,8 +95,29 @@ public class CardBox : MonoBehaviour
     {
         cardObjects[index].transform.localPosition += Vector3.up * 30;
     }
+
+    public void Highlight(int[] lightIndexes)
+    {
+        int cardsCnt = Count;
+        int lightCnt = lightIndexes.Length;
+        int lightIterator = 0;
+
+        for (int i = 0; i < cardsCnt; i++)
+        {
+            if (lightIterator < lightCnt
+                && i == lightIndexes[lightIterator])
+            {
+                lightIterator++;
+                cardObjects[i].GetComponent<Image>().color = Color.white;
+            }
+            else
+            {
+                cardObjects[i].GetComponent<Image>().color = Color.gray;
+            }
+        }
+    }
     #endregion
-    
+
     public void TurnAll()
     {
         int cardCnt = cards.Count;
@@ -108,7 +127,7 @@ public class CardBox : MonoBehaviour
             cardObjects[i].GetComponent<Image>().sprite = cards[i].GetSprite();
         }
     }
-
+    
     /// <summary>
     /// 範囲をランダムに選択して並べ替える、リアルなシャッフル
     /// ベンチマーク完敗
