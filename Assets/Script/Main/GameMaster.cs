@@ -35,15 +35,13 @@ public class GameMaster : MonoBehaviour
         connector = new FirebaseConnector("Master/card0");
 
         playCnt = 0;
-        InvitePlayers();
+        //InvitePlayers();
         NewPlay();
     }
 
     // Update is called once per frame
     void Update()
     {
-        Debug.Log(stateNo.Name<MasterState>());
-
         switch (stateNo)
         {
             case (int)MasterState.SetUp:
@@ -88,32 +86,6 @@ public class GameMaster : MonoBehaviour
                 }
                 break;
         }
-
-
-        /*if (players[nowPlayerNo].stateNo == (int)PlayerState.Idle)
-        {
-            if (!onHeartBreak && fieldCards.Count > 0
-                && fieldCards[fieldCards.Count - 1].markNo == (int)MarkName.heart)
-            {
-                onHeartBreak = true;
-            }
-
-            if (nowPlayerNo == lastPlayerNo)
-            {
-                trickCnt++;
-                EndTrick();
-                if (trickCnt >= trickLimit)
-                {
-                    NewPlay();
-                }
-            }
-            else
-            {
-                nowPlayerNo = nowPlayerNo == playerCnt - 1 ? 0 : nowPlayerNo + 1;
-            }
-
-            players[nowPlayerNo].stateNo = (int)PlayerState.BeginMyPhase;
-        }*/
     }
 
     #region Test Methods
@@ -200,6 +172,9 @@ public class GameMaster : MonoBehaviour
         deckCards.RemoveAll(pred);
     }
 
+    /// <summary>
+    /// used only when ofline
+    /// </summary>
     void InvitePlayers()
     {
         players = new List<GamePlayer>();

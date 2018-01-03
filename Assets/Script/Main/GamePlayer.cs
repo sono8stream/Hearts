@@ -11,8 +11,9 @@ public class GamePlayer : MonoBehaviour
 
     [SerializeField]
     Text scoreText;
-
+    [SerializeField]
     GameMaster master;
+
     CardBox fieldBox;
     int selectIndex;
     int[] selectableIndexes;
@@ -23,10 +24,13 @@ public class GamePlayer : MonoBehaviour
     // Use this for initialization
     void Start()
     {
-        master = GameObject.Find("GameMaster").GetComponent<GameMaster>();
         fieldBox = master.fieldCards;
+        stateNo = (int)PlayerState.Idle;
 
-        handDB = new FirebaseConnector("player" + myNo.ToString() + "/handCards");
+        /*FirebaseConnector con = new FirebaseConnector("player0");
+        con.GetValueDictionary(
+            "{\"hand1\":{\"card\":\"value1\"},\"hand2\":{\"card\":\"value2\"},"
+            + "\"hand3\":{\"card1\":{\"card2\":\"value3\"}},\"name\":\"sono\"}");*/
     }
 
     // Update is called once per frame
@@ -58,7 +62,14 @@ public class GamePlayer : MonoBehaviour
         }
     }
 
-    public void PrepareNewPlay()
+    public void InitializeDB(int no,Firebase.Database.DatabaseReference handReference)
+    {
+        myNo = no;
+        handDB = new FirebaseConnector(handReference);
+        handDB.AddAsync("name", "hoge");
+    }
+
+    void PrepareNewPlay()
     {
         handCards.ListView();
         UpdateHandDB();
