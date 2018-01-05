@@ -24,6 +24,7 @@ public class GameMaster : MonoBehaviour
     int lastPlayerNo;
     int playCnt;
     int stateNo;
+    bool isParent;
 
     List<GamePlayer> players;
     FirebaseConnector connector;
@@ -32,11 +33,10 @@ public class GameMaster : MonoBehaviour
     // Use this for initialization
     void Start()
     {
-        connector = new FirebaseConnector("Master/card0");
-
         playCnt = 0;
         //InvitePlayers();
-        NewPlay();
+        //NewPlay();
+        stateNo = (int)MasterState.Idle;
     }
 
     // Update is called once per frame
@@ -110,6 +110,20 @@ public class GameMaster : MonoBehaviour
     }
     #endregion
 
+    public void InitializeDB(int playerCount, bool isParent, string[] nameArray, int clientNo,
+        Firebase.Database.DatabaseReference masterReference)
+    {
+        playerCnt = playerCount;
+        isParent = this.isParent;
+        connector = new FirebaseConnector(masterReference);
+        if (isParent)
+        {
+            connector.AddAsync("Master", "いるよ");
+        }
+        InvitePlayers(nameArray,clientNo);
+        NewPlay();
+    }
+
     void NewPlay()
     {
         AddTrumpSetToDeck();
@@ -175,7 +189,7 @@ public class GameMaster : MonoBehaviour
     /// <summary>
     /// used only when ofline
     /// </summary>
-    void InvitePlayers()
+    void InvitePlayers(string[] nameArray, int clientNo)
     {
         players = new List<GamePlayer>();
         ResourceLoader rl
@@ -184,6 +198,7 @@ public class GameMaster : MonoBehaviour
 
         for (int i = 0; i < playerCnt; i++)
         {
+            int playerNo = (i + clientNo) % playerCnt;
             GameObject g = Instantiate(rl.playerOrigin);
             g.transform.SetParent(transform.parent);
 
@@ -192,7 +207,14 @@ public class GameMaster : MonoBehaviour
             g.transform.Find("hand").localEulerAngles = Vector3.zero;
             g.transform.localScale = Vector3.one;
             GamePlayer player= g.GetComponent<GamePlayer>();
-            player.myNo = i;
+
+            player.myNo = playerNo;
+            player.master = this;
+            if (playerNo == clientNo)
+            {
+                player.InitializeDB(playerNo, nameArray[playerNo],
+                        connector.MyReference.Parent.Child("/Player" + playerNo.ToString()));
+            }
             players.Add(player);
         }
     }
@@ -294,5 +316,5 @@ public class GameMaster : MonoBehaviour
 
 public enum MasterState
 {
-    SetUp = 0, TrickBegin,OnTrick,TrickEnd
+    SetUp = 0, TrickBegin,OnTrick,TrickEnd,Idle
 }

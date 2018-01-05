@@ -8,29 +8,24 @@ public class GamePlayer : MonoBehaviour
     public int myNo;
     public int stateNo = (int)PlayerState.Idle;
     public CardBox handCards;
+    public string myName;
+    public GameMaster master;
 
     [SerializeField]
     Text scoreText;
-    [SerializeField]
-    GameMaster master;
 
     CardBox fieldBox;
     int selectIndex;
     int[] selectableIndexes;
     int totalScore;
     int nowGameScore;
-    FirebaseConnector handDB;
+    FirebaseConnector myDB;
 
     // Use this for initialization
     void Start()
     {
         fieldBox = master.fieldCards;
         stateNo = (int)PlayerState.Idle;
-
-        /*FirebaseConnector con = new FirebaseConnector("player0");
-        con.GetValueDictionary(
-            "{\"hand1\":{\"card\":\"value1\"},\"hand2\":{\"card\":\"value2\"},"
-            + "\"hand3\":{\"card1\":{\"card2\":\"value3\"}},\"name\":\"sono\"}");*/
     }
 
     // Update is called once per frame
@@ -62,17 +57,19 @@ public class GamePlayer : MonoBehaviour
         }
     }
 
-    public void InitializeDB(int no,Firebase.Database.DatabaseReference handReference)
+    public void InitializeDB(int no,string name,
+        Firebase.Database.DatabaseReference playerReference)
     {
         myNo = no;
-        handDB = new FirebaseConnector(handReference);
-        handDB.AddAsync("name", "hoge");
+        myName = name;
+        myDB = new FirebaseConnector(playerReference);
+        myDB.AddAsync("Name", myName);
     }
 
     void PrepareNewPlay()
     {
         handCards.ListView();
-        UpdateHandDB();
+        UpdateMyDB();
     }
 
     void GetSelectableIndexes()
@@ -118,22 +115,23 @@ public class GamePlayer : MonoBehaviour
         {
             handCards.MoveTo(ref fieldBox, selectableIndexes[selectIndex]);
             fieldBox.ListView();
-            UpdateHandDB();
+            UpdateMyDB();
             Debug.Log("Summon");
             return true;
         }
         return false;
     }
 
-    void UpdateHandDB()
+    void UpdateMyDB()
     {
-        int dataCnt = handDB.dataMap.Count;
+        Dictionary<string, object> stringMap = new Dictionary<string, object>();
+        int dataCnt = myDB.dataMap.Count;
         int handCnt = handCards.Count;
         for (int i = 0; i < dataCnt || i < handCnt; i++)
         {
             if (i >= handCnt)
             {
-                handDB.RemoveItem("card" + i.ToString());
+                myDB.RemoveItem("card" + i.ToString());
             }
             else
             {
@@ -141,18 +139,20 @@ public class GamePlayer : MonoBehaviour
                 itemMap.Add("markNo", handCards[i].markNo);
                 itemMap.Add("value", handCards[i].value);
 
-                if(i>=dataCnt)
+                /*if(i>=dataCnt)
                 {
-                    handDB.dataMap.Add("card" + i.ToString(), itemMap);
+                    myDB.dataMap.Add("card" + i.ToString(), itemMap);
                 }
                 else
                 {
-                    handDB.dataMap["card" + i.ToString()] = itemMap;
-                }
+                    myDB.dataMap["card" + i.ToString()] = itemMap;
+                }*/
+                stringMap.Add("card" + i.ToString(), itemMap);
             }
         }
 
-        handDB.AsyncMap();
+        myDB.AddAsync("handCards",stringMap);
+        //myDB.AsyncMap();
     }
 
     public void AddScore(int point)

@@ -13,7 +13,7 @@ public class FirebaseConnector
     public DatabaseReference MyReference { get { return myReference; } }
 
     Dictionary<string, object> readDataMap;
-    string readData;
+    DataSnapshot readData;
     bool readCompleted;
 
     void Initialize()
@@ -38,6 +38,7 @@ public class FirebaseConnector
 
     public void AddAsync(string key, object value)
     {
+        Dictionary<string, object> dataMap = new Dictionary<string, object>();
         dataMap.Add(key, value);
         myReference.UpdateChildrenAsync(dataMap);
     }
@@ -67,9 +68,7 @@ public class FirebaseConnector
             }
             else if (task.IsCompleted)
             {
-                DataSnapshot snapshot = task.Result;
-
-                readData = snapshot.GetRawJsonValue();
+                readData = task.Result;
                 Debug.Log(readData);
                 readCompleted = true;
 
@@ -78,21 +77,33 @@ public class FirebaseConnector
         });
     }
 
-    public bool GetReadData(ref string data)
+    public bool GetReadData(ref DataSnapshot snap)
     {
         if (!readCompleted) return false;
 
         readCompleted = false;
-        data = readData;
+        snap = readData;
+        Debug.Log(snap.Value);
         return true;
+    }
+
+    public string[] GetChildrenValueString(DataSnapshot snap)
+    {
+        List<string> name = new List<string>();
+        foreach (DataSnapshot s in snap.Children)
+        {
+            name.Add(s.GetRawJsonValue());
+        }
+        return name.ToArray();
     }
 
     /// <summary>
     /// すべてstringかDictionary<string,Dictionary<string,...>>の形に
     /// </summary>
-    void DeserializeReadData()
+        void DeserializeReadData()
     {
-        Dictionary<string, object> desDictionary = GetValueDictionary(readData);
+        Dictionary<string, object> desDictionary
+            = GetValueDictionary(readData.GetRawJsonValue());
     }
 
     public Dictionary<string, object> GetValueDictionary(string keyStr)
@@ -133,7 +144,6 @@ public class FirebaseConnector
                     tempDictionary.Add(key, GetValueDictionary(valueStr));
                     onKey = true;
                 }
-
             }
         }
 
