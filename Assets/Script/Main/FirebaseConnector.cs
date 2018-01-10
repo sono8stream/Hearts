@@ -92,7 +92,8 @@ public class FirebaseConnector
         List<string> name = new List<string>();
         foreach (DataSnapshot s in snap.Children)
         {
-            name.Add(s.GetRawJsonValue());
+            string nameJson = s.GetRawJsonValue();
+            name.Add(nameJson.Substring(1, nameJson.Length - 2));
         }
         return name.ToArray();
     }

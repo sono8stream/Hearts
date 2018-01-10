@@ -34,8 +34,6 @@ public class GameMaster : MonoBehaviour
     void Start()
     {
         playCnt = 0;
-        //InvitePlayers();
-        //NewPlay();
         stateNo = (int)MasterState.Idle;
     }
 
@@ -114,14 +112,15 @@ public class GameMaster : MonoBehaviour
         Firebase.Database.DatabaseReference masterReference)
     {
         playerCnt = playerCount;
-        isParent = this.isParent;
+        this.isParent = isParent;
         connector = new FirebaseConnector(masterReference);
+        Debug.Log("connected");
         if (isParent)
         {
-            connector.AddAsync("Master", "いるよ");
+            Debug.Log("connected");
+            InvitePlayers(nameArray,clientNo);
+            NewPlay();
         }
-        InvitePlayers(nameArray,clientNo);
-        NewPlay();
     }
 
     void NewPlay()
@@ -132,7 +131,7 @@ public class GameMaster : MonoBehaviour
         ExcludeCards();
         ServeCards(true);
 
-        for(int i = 0; i < playerCnt; i++)
+        for (int i = 0; i < playerCnt; i++)
         {
             players[i].stateNo = (int)PlayerState.SetUp;
         }
@@ -189,8 +188,9 @@ public class GameMaster : MonoBehaviour
     /// <summary>
     /// used only when ofline
     /// </summary>
-    void InvitePlayers(string[] nameArray, int clientNo)
+    void InvitePlayers(string[] nameArray,int clientNo)
     {
+        Debug.Log(clientNo);
         players = new List<GamePlayer>();
         ResourceLoader rl
             = GameObject.Find("Resource").GetComponent<ResourceLoader>();
@@ -212,7 +212,7 @@ public class GameMaster : MonoBehaviour
             player.master = this;
             if (playerNo == clientNo)
             {
-                player.InitializeDB(playerNo, nameArray[playerNo],
+                player.InitializeDB(playerNo, playerNo == clientNo, nameArray[playerNo],
                         connector.MyReference.Parent.Child("/Player" + playerNo.ToString()));
             }
             players.Add(player);

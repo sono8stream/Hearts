@@ -10,6 +10,7 @@ public class GamePlayer : MonoBehaviour
     public CardBox handCards;
     public string myName;
     public GameMaster master;
+    public bool isPlayable;
 
     [SerializeField]
     Text scoreText;
@@ -57,10 +58,11 @@ public class GamePlayer : MonoBehaviour
         }
     }
 
-    public void InitializeDB(int no,string name,
+    public void InitializeDB(int no,bool playable,string name,
         Firebase.Database.DatabaseReference playerReference)
     {
         myNo = no;
+        isPlayable = playable;
         myName = name;
         myDB = new FirebaseConnector(playerReference);
         myDB.AddAsync("Name", myName);
@@ -124,34 +126,19 @@ public class GamePlayer : MonoBehaviour
 
     void UpdateMyDB()
     {
-        Dictionary<string, object> stringMap = new Dictionary<string, object>();
+        Dictionary<string, object> handMap = new Dictionary<string, object>();
         int dataCnt = myDB.dataMap.Count;
         int handCnt = handCards.Count;
         for (int i = 0; i < dataCnt || i < handCnt; i++)
         {
-            if (i >= handCnt)
-            {
-                myDB.RemoveItem("card" + i.ToString());
-            }
-            else
-            {
                 Dictionary<string, object> itemMap = new Dictionary<string, object>();
                 itemMap.Add("markNo", handCards[i].markNo);
                 itemMap.Add("value", handCards[i].value);
-
-                /*if(i>=dataCnt)
-                {
-                    myDB.dataMap.Add("card" + i.ToString(), itemMap);
-                }
-                else
-                {
-                    myDB.dataMap["card" + i.ToString()] = itemMap;
-                }*/
-                stringMap.Add("card" + i.ToString(), itemMap);
-            }
+                handMap.Add("card" + i.ToString(), itemMap);
+            
         }
 
-        myDB.AddAsync("handCards",stringMap);
+        myDB.AddAsync("handCards",handMap);
         //myDB.AsyncMap();
     }
 

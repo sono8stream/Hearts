@@ -3,6 +3,7 @@ using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 
 public class TextFielder : MonoBehaviour
 {
@@ -54,7 +55,9 @@ public class TextFielder : MonoBehaviour
 
     public void CashMessage()
     {
-        messageCash = inputField.transform.Find("Text").GetComponent<Text>().text;
+        InputField input = inputField.GetComponent<InputField>();
+        messageCash = input.text;
+        input.text = "";
     }
 
     public string GetMessage()
@@ -67,9 +70,9 @@ public class TextFielder : MonoBehaviour
         return temp;
     }
 
-    public void CleanInputField(string caption)
+    public void CleanInputField(string caption,string defaultInput="")
     {
-        inputField.GetComponent<InputField>().text = "";
+        inputField.GetComponent<InputField>().text = defaultInput;
         inputField.transform.Find("Placeholder").GetComponent<Text>().text = caption;
     }
 }

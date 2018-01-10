@@ -9,7 +9,7 @@ public class RoomKeeper : MonoBehaviour
     [SerializeField]
     TextFielder textFielder;
 
-    const int nameMaxLength = 6;
+    const int nameMaxLength = 12;
     const string playersDir = "Players";
 
     FirebaseConnector connector;
@@ -26,8 +26,8 @@ public class RoomKeeper : MonoBehaviour
     void Start()
     {
         textFielder.StartCoroutine(textFielder.SwitchDialog(true, string.Format(
-                "ようこそ。あなたは何さんだい？({0}文字以内)", nameMaxLength)));
-        textFielder.CleanInputField("名前を入力してね");
+                "ようこそ。あなたの名前は何だい？({0}文字以内)", nameMaxLength)));
+        textFielder.CleanInputField("名前を入力してね", "testPlayer");
 
         connector = new FirebaseConnector("Rooms");
     }
@@ -46,7 +46,7 @@ public class RoomKeeper : MonoBehaviour
                     "OK、" + playerName
                     + "さん。プレイしたい部屋はどこだい。({0}文字以内)",
                     nameMaxLength)));
-                textFielder.CleanInputField("部屋名を入力してね");
+                textFielder.CleanInputField("部屋名を入力してね","TestRoom");
                 break;
 
             case (int)KeeperState.RoomReception:
@@ -110,7 +110,7 @@ public class RoomKeeper : MonoBehaviour
         }
         else
         {
-            connector.RemoveItem(roomName + "/" + playersDir + "/" + playerName);
+            connector.RemoveItem(roomName + "/" + playersDir + "/" + playerNo);
             connector.RemoveItem(roomName + "/Player" + playerNo.ToString());
         }
     }
