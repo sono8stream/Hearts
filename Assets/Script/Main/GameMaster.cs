@@ -20,13 +20,17 @@ public class GameMaster : MonoBehaviour
     int trickCnt;
     int trickLimit;
     int playerCnt = 4;
+    public int PlayerCnt { get { return playerCnt; } }
     int nowPlayerNo;
     int lastPlayerNo;
     int playCnt;
     int stateNo;
+    int clientNo;
+    public int ClientNo { get { return clientNo; } }
     bool isParent;
+    public bool IsParent { get { return isParent; } }
 
-    List<GamePlayer> players;
+    public List<GamePlayer> players;
     FirebaseConnector connector;
     #endregion
 
@@ -60,13 +64,13 @@ public class GameMaster : MonoBehaviour
                 {
                     onHeartBreak = true;
                 }
-
                 if (nowPlayerNo == lastPlayerNo)
                 {
                     stateNo = (int)MasterState.TrickEnd;
                 }
                 else
                 {
+                    Debug.Log("nextPlayer");
                     nowPlayerNo = nowPlayerNo == playerCnt - 1 ? 0 : nowPlayerNo + 1;
                     players[nowPlayerNo].stateNo = (int)PlayerState.BeginMyPhase;
                 }
@@ -74,6 +78,8 @@ public class GameMaster : MonoBehaviour
 
             case (int)MasterState.TrickEnd:
                 EndTrick();
+                Debug.Log(trickLimit);
+                trickCnt++;
                 if (trickCnt >= trickLimit)
                 {
                     NewPlay();
@@ -113,30 +119,32 @@ public class GameMaster : MonoBehaviour
     {
         playerCnt = playerCount;
         this.isParent = isParent;
-        connector = new FirebaseConnector(masterReference);
+        connector = new FirebaseConnector(masterReference, isParent);
         Debug.Log("connected");
-        if (isParent)
-        {
-            Debug.Log("connected");
-            InvitePlayers(nameArray,clientNo);
-            NewPlay();
-        }
+        InvitePlayers(nameArray, clientNo);
+        this.clientNo = clientNo;
+        NewPlay();
     }
 
     void NewPlay()
     {
-        AddTrumpSetToDeck();
-        deckCards.SyncCardObjects();
-        deckCards.TurnAll();
-        ExcludeCards();
-        ServeCards(true);
+        trickLimit = 52 / playerCnt;
+        trickCnt = 0;
+        if (isParent)
+        {
+            AddTrumpSetToDeck();
+            deckCards.SyncCardObjects();
+            deckCards.TurnAll();
+            ExcludeCards();
+            ServeCards(true);
+        }
 
         for (int i = 0; i < playerCnt; i++)
         {
             players[i].stateNo = (int)PlayerState.SetUp;
+            players[i].myDB.ReadQuery(GamePlayer.handDBname);
         }
-        trickCnt = 0;
-        nowPlayerNo = playCnt;
+        nowPlayerNo = (playerCnt - clientNo) % playerCnt;
         lastPlayerNo = nowPlayerNo == 0 ? playerCnt - 1 : nowPlayerNo - 1;
         stateNo = (int)MasterState.SetUp;
     }
@@ -188,7 +196,7 @@ public class GameMaster : MonoBehaviour
     /// <summary>
     /// used only when ofline
     /// </summary>
-    void InvitePlayers(string[] nameArray,int clientNo)
+    void InvitePlayers(string[] nameArray, int clientNo)
     {
         Debug.Log(clientNo);
         players = new List<GamePlayer>();
@@ -206,15 +214,13 @@ public class GameMaster : MonoBehaviour
             g.transform.localEulerAngles = Vector3.forward * playerPoses[i].z;
             g.transform.Find("hand").localEulerAngles = Vector3.zero;
             g.transform.localScale = Vector3.one;
-            GamePlayer player= g.GetComponent<GamePlayer>();
+            GamePlayer player = g.GetComponent<GamePlayer>();
 
             player.myNo = playerNo;
             player.master = this;
-            if (playerNo == clientNo)
-            {
-                player.InitializeDB(playerNo, playerNo == clientNo, nameArray[playerNo],
-                        connector.MyReference.Parent.Child("/Player" + playerNo.ToString()));
-            }
+            player.InitializeDB(playerNo, playerNo == clientNo, nameArray[playerNo],
+                    connector.MyReference.Parent.Child(
+                        string.Format("Player{0}", playerNo.ToString())));
             players.Add(player);
         }
     }
@@ -247,16 +253,19 @@ public class GameMaster : MonoBehaviour
 
     void ServeCards(bool randomSelect)
     {
-        trickLimit = 0;
-        int index;
-        while (deckCards.Count > 0)
+        FirebaseConnector tempConnector = new FirebaseConnector(connector.MyReference.Parent);
+        trickLimit = deckCards.Count / playerCnt;
+        for(int i = 0; i < playerCnt; i++)
         {
-            for (int i = 0; i < playerCnt; i++)
+            Dictionary<string, object> cardDict = new Dictionary<string, object>();
+            for (int j = 0; j < trickLimit; j++)
             {
-                index = randomSelect ? Random.Range(0, deckCards.Count) : 0;
-                deckCards.MoveTo(ref players[i].handCards, index);
+                int index = Random.Range(0, deckCards.Count);
+                cardDict.Add(Card.dbName + j.ToString(), deckCards[index].DataDictionary());
+                deckCards.RemoveAt(index);
             }
-            trickLimit++;
+            tempConnector.AddAsync(string.Format("Player{0}/{1}", i, GamePlayer.handDBname),
+                cardDict);
         }
     }
     #endregion

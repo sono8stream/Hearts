@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using Firebase.Database;
 
 public class CardBox : MonoBehaviour
 {
@@ -55,6 +56,18 @@ public class CardBox : MonoBehaviour
         {
             AddCardObject();
         }
+    }
+
+    public Dictionary<string,object> CardListDictionary()
+    {
+        Dictionary<string, object> cardMap = new Dictionary<string, object>();
+        int cnt = Count;
+        for (int i = 0; i < cnt; i++)
+        {
+            cardMap.Add(Card.dbName + i.ToString(), cards[i].DataDictionary());
+        }
+
+        return cardMap;
     }
 
     #region View Methods

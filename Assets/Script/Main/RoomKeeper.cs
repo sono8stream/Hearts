@@ -30,6 +30,7 @@ public class RoomKeeper : MonoBehaviour
         textFielder.CleanInputField("名前を入力してね", "testPlayer");
 
         connector = new FirebaseConnector("Rooms");
+        stateNo = (int)KeeperState.NameReception;
     }
 
     // Update is called once per frame
@@ -46,24 +47,23 @@ public class RoomKeeper : MonoBehaviour
                     "OK、" + playerName
                     + "さん。プレイしたい部屋はどこだい。({0}文字以内)",
                     nameMaxLength)));
-                textFielder.CleanInputField("部屋名を入力してね","TestRoom");
+                textFielder.CleanInputField("部屋名を入力してね", "TestRoom");
                 break;
 
             case (int)KeeperState.RoomReception:
                 roomName = textFielder.GetMessage();
                 if (roomName == null) return;
 
-                connector.Read(roomName + "/" + playersDir);
+                connector.ReadQuery(roomName + "/" + playersDir,true);
                 stateNo = (int)KeeperState.Inquiry;
                 textFielder.StartCoroutine(textFielder.SwitchDialog(true,
                     "問い合わせ中..."));
                 break;
 
             case (int)KeeperState.Inquiry:
-                Firebase.Database.DataSnapshot snap = null;
-                if (!connector.GetReadData(ref snap)) return;
+                if (connector.SnapData==null) return;
 
-                if (snap.Value == null)
+                if (connector.SnapData.Value == null)
                 {
                     MakeRoom();
                     playerNo = 0;
@@ -73,7 +73,7 @@ public class RoomKeeper : MonoBehaviour
                 else
                 {
                     EnterRoom();
-                    playerNo = (int)snap.ChildrenCount;
+                    playerNo = (int)connector.SnapData.ChildrenCount;
                     roomParent = false;
                     stateNo = (int)KeeperState.PlayWaiting;
                 }
@@ -94,7 +94,7 @@ public class RoomKeeper : MonoBehaviour
             case (int)KeeperState.SetupGameMaster:
                 master.InitializeDB(nowPlayerCnt, roomParent, playerNameArray, playerNo,
                     connector.MyReference.Child(roomName + "/Master"));
-                gameObject.SetActive(false);
+                stateNo = (int)KeeperState.Idle;
                 break;
         }
     }
@@ -158,6 +158,8 @@ public class RoomKeeper : MonoBehaviour
                      return;
                  }
 
+                 if (stateNo != (int)KeeperState.PlayWaiting) return;
+
                  if (args.Snapshot.GetRawJsonValue().Equals(
                      ((int)(RoomState.Playing)).ToString()))
                  {
@@ -174,6 +176,7 @@ public class RoomKeeper : MonoBehaviour
                     return;
                 }
 
+                playerNameArray = connector.GetChildrenValueString(args.Snapshot);
                 nowPlayerCnt = (int)args.Snapshot.ChildrenCount;
                 textFielder.StartCoroutine(textFielder.SwitchDialog(true,
             roomName + "に入ったぜ。ゲームが始まるまで待機だ。(現在" + nowPlayerCnt + "人)"));
@@ -186,7 +189,7 @@ public class RoomKeeper : MonoBehaviour
 enum KeeperState
 {
     NameReception = 0, RoomInquiry, RoomReception, Inquiry, Wanting, PlayWaiting,
-    SetupGameMaster
+    SetupGameMaster,Idle
 }
 
 enum RoomState

@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class Card
 {
+    public const string dbName = "card";
+
     public int markNo;
     public int value;
     public bool frontFace;
@@ -32,6 +34,14 @@ public class Card
     public bool IsMatch(int mNo,int val)
     {
         return markNo == mNo && value == val;
+    }
+
+    public Dictionary<string,object> DataDictionary()
+    {
+        Dictionary<string, object> itemMap = new Dictionary<string, object>();
+        itemMap.Add("markNo", markNo);
+        itemMap.Add("value", value);
+        return itemMap;
     }
 }
 

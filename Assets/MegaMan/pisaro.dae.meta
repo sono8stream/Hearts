@@ -1,0 +1,218 @@
+fileFormatVersion: 2
+guid: 4e3c902ef4ac4454c8b0597a4e494294
+timeCreated: 1515750361
+licenseType: Free
+ModelImporter:
+  serializedVersion: 22
+  fileIDToRecycleName:
+    100000: b_100
+    100002: b_101
+    100004: b_102
+    100006: b_103
+    100008: b_104
+    100010: b_105
+    100012: b_106
+    100014: b_107
+    100016: breast
+    100018: head
+    100020: hip
+    100022: L_collar
+    100024: L_foot
+    100026: L_hand
+    100028: L_harm
+    100030: L_hleg
+    100032: L_larm
+    100034: L_lleg
+    100036: L_toe
+    100038: model
+    100040: neck
+    100042: //RootNode
+    100044: polygon0
+    100046: polygon1
+    100048: polygon2
+    100050: polygon3
+    100052: polygon4
+    100054: polygon5
+    100056: R_collar
+    100058: R_foot
+    100060: R_hand
+    100062: R_harm
+    100064: R_hleg
+    100066: R_larm
+    100068: R_lleg
+    100070: R_toe
+    100072: shadow2
+    100074: waist
+    100076: X
+    100078: Y
+    100080: Z
+    400000: b_100
+    400002: b_101
+    400004: b_102
+    400006: b_103
+    400008: b_104
+    400010: b_105
+    400012: b_106
+    400014: b_107
+    400016: breast
+    400018: head
+    400020: hip
+    400022: L_collar
+    400024: L_foot
+    400026: L_hand
+    400028: L_harm
+    400030: L_hleg
+    400032: L_larm
+    400034: L_lleg
+    400036: L_toe
+    400038: model
+    400040: neck
+    400042: //RootNode
+    400044: polygon0
+    400046: polygon1
+    400048: polygon2
+    400050: polygon3
+    400052: polygon4
+    400054: polygon5
+    400056: R_collar
+    400058: R_foot
+    400060: R_hand
+    400062: R_harm
+    400064: R_hleg
+    400066: R_larm
+    400068: R_lleg
+    400070: R_toe
+    400072: shadow2
+    400074: waist
+    400076: X
+    400078: Y
+    400080: Z
+    2100000: chara_h_heroes_118_mat101
+    2100002: chara_h_heroes_118_mat102
+    2100004: chara_b_heroes_118_mat101
+    2100006: chara_b_heroes_118_mat103
+    2100008: chara_b_heroes_118_mat102
+    2100010: shadow1
+    4300000: polygon0
+    4300002: polygon1
+    4300004: polygon2
+    4300006: polygon3
+    4300008: polygon4
+    4300010: polygon5
+    9500000: //RootNode
+    13700000: polygon0
+    13700002: polygon1
+    13700004: polygon2
+    13700006: polygon3
+    13700008: polygon4
+    13700010: polygon5
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: chara_b_heroes_118_mat101
+    second: {fileID: 2100000, guid: ef013214cda3c8f4c8abf673299e9dc8, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: chara_b_heroes_118_mat102
+    second: {fileID: 2100000, guid: 1d1d97add2f174e42ab6d68c6057f8c7, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: chara_b_heroes_118_mat103
+    second: {fileID: 2100000, guid: 0c649d8377372a740ba8b9d65b693671, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: chara_h_heroes_118_mat101
+    second: {fileID: 2100000, guid: 22dd30f51bd05a945af3a8c637daeba7, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: chara_h_heroes_118_mat102
+    second: {fileID: 2100000, guid: cac07107ff3dc524f9be89b96cb8360a, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: shadow1
+    second: {fileID: 10302, guid: 0000000000000000f000000000000000, type: 0}
+  materials:
+    importMaterials: 1
+    materialName: 0
+    materialSearch: 1
+    materialLocation: 1
+  animations:
+    legacyGenerateAnimations: 4
+    bakeSimulation: 0
+    resampleCurves: 1
+    optimizeGameObjects: 0
+    motionNodeName: 
+    rigImportErrors: 
+    rigImportWarnings: 
+    animationImportErrors: 
+    animationImportWarnings: 
+    animationRetargetingWarnings: 
+    animationDoRetargetingWarnings: 0
+    importAnimatedCustomProperties: 0
+    animationCompression: 1
+    animationRotationError: 0.5
+    animationPositionError: 0.5
+    animationScaleError: 0.5
+    animationWrapMode: 0
+    extraExposedTransformPaths: []
+    extraUserProperties: []
+    clipAnimations: []
+    isReadable: 1
+  meshes:
+    lODScreenPercentages: []
+    globalScale: 1
+    meshCompression: 0
+    addColliders: 0
+    importVisibility: 1
+    importBlendShapes: 1
+    importCameras: 1
+    importLights: 1
+    swapUVChannels: 0
+    generateSecondaryUV: 0
+    useFileUnits: 1
+    optimizeMeshForGPU: 1
+    keepQuads: 0
+    weldVertices: 1
+    preserveHierarchy: 0
+    indexFormat: 0
+    secondaryUVAngleDistortion: 8
+    secondaryUVAreaDistortion: 15.000001
+    secondaryUVHardAngle: 88
+    secondaryUVPackMargin: 4
+    useFileScale: 1
+  tangentSpace:
+    normalSmoothAngle: 60
+    normalImportMode: 0
+    tangentImportMode: 3
+    normalCalculationMode: 4
+  importAnimation: 1
+  copyAvatar: 0
+  humanDescription:
+    serializedVersion: 2
+    human: []
+    skeleton: []
+    armTwist: 0.5
+    foreArmTwist: 0.5
+    upperLegTwist: 0.5
+    legTwist: 0.5
+    armStretch: 0.05
+    legStretch: 0.05
+    feetSpacing: 0
+    rootMotionBoneName: 
+    rootMotionBoneRotation: {x: 0, y: 0, z: 0, w: 1}
+    hasTranslationDoF: 0
+    hasExtraRoot: 0
+    skeletonHasParents: 1
+  lastHumanDescriptionAvatarSource: {instanceID: 0}
+  animationType: 2
+  humanoidOversampling: 1
+  additionalBone: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

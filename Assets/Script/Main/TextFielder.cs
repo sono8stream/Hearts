@@ -11,7 +11,7 @@ public class TextFielder : MonoBehaviour
     string messageCash;
 
     // Use this for initialization
-    void Start()
+    void Awake()
     {
         dialogBox = transform.Find("DialogBox").gameObject;
         inputField = transform.Find("InputField").gameObject;

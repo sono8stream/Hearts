@@ -11,36 +11,52 @@ public class FirebaseConnector
 
     DatabaseReference myReference;
     public DatabaseReference MyReference { get { return myReference; } }
+    DataSnapshot snapData;
+    public DataSnapshot SnapData { get { return snapData; } }
 
     Dictionary<string, object> readDataMap;
-    DataSnapshot readData;
     bool readCompleted;
+    bool isReadOnly;
 
     void Initialize()
     {
         FirebaseApp.DefaultInstance.SetEditorDatabaseUrl(
             "https://unitytablegame.firebaseio.com/");
         dataMap = new Dictionary<string, object>();
-        readData = null;
+        snapData = null;
     }
 
-    public FirebaseConnector(string referenceName)
+    public FirebaseConnector(string referenceName, bool readOnly = false)
     {
         Initialize();
         myReference = FirebaseDatabase.DefaultInstance.GetReference(referenceName);
+        isReadOnly = readOnly;
     }
 
-    public FirebaseConnector(DatabaseReference reference)
+    public FirebaseConnector(DatabaseReference reference, bool readOnly = false)
     {
         Initialize();
         myReference = reference;
+        isReadOnly = readOnly;
     }
 
     public void AddAsync(string key, object value)
     {
+        if (isReadOnly) return;
+
         Dictionary<string, object> dataMap = new Dictionary<string, object>();
         dataMap.Add(key, value);
         myReference.UpdateChildrenAsync(dataMap);
+        Debug.Log(key);
+        Debug.Log(dataMap);
+    }
+
+    public void Push(string key,string name)
+    {
+        bool readOnly = isReadOnly;
+        isReadOnly = false;
+        AddAsync(string.Format("{0}/{1}", key, name), "OK");
+        isReadOnly = readOnly;
     }
 
     public void AsyncMap()
@@ -55,7 +71,7 @@ public class FirebaseConnector
         reference.RemoveValueAsync();
     }
 
-    public void Read(string path)
+    public void ReadQuery(string path,bool nullable=false)
     {
         DatabaseReference reference = path == null ? myReference : myReference.Child(path);
         readCompleted = false;
@@ -68,16 +84,25 @@ public class FirebaseConnector
             }
             else if (task.IsCompleted)
             {
-                readData = task.Result;
-                Debug.Log(readData);
+                if (!nullable && task.Result == null)
+                {
+                    ReadQuery(path);
+                    return;
+                }
+                snapData = task.Result;
                 readCompleted = true;
-
-                DeserializeReadData();
+                //Debug.Log(snapData);
+                //DeserializeReadData();
             }
         });
     }
 
-    public bool GetReadData(ref DataSnapshot snap)
+    public void RemoveReadData()
+    {
+        snapData = null;
+    }
+
+    /*public bool GetReadData()
     {
         if (!readCompleted) return false;
 
@@ -85,7 +110,7 @@ public class FirebaseConnector
         snap = readData;
         Debug.Log(snap.Value);
         return true;
-    }
+    }*/
 
     public string[] GetChildrenValueString(DataSnapshot snap)
     {
@@ -101,10 +126,10 @@ public class FirebaseConnector
     /// <summary>
     /// すべてstringかDictionary<string,Dictionary<string,...>>の形に
     /// </summary>
-        void DeserializeReadData()
+    void DeserializeReadData()
     {
         Dictionary<string, object> desDictionary
-            = GetValueDictionary(readData.GetRawJsonValue());
+            = GetValueDictionary(snapData.GetRawJsonValue());
     }
 
     public Dictionary<string, object> GetValueDictionary(string keyStr)
@@ -115,7 +140,7 @@ public class FirebaseConnector
         }
 
         Dictionary<string, object> tempDictionary = new Dictionary<string, object>();
-        
+
         bool onKey = true;
         string key = "";
         string valueStr = "";
@@ -126,7 +151,7 @@ public class FirebaseConnector
             if (onKey)
             {
                 if (rawData[i] != '"') continue;
-                
+
                 key = ExtractFirstString(rawData, ref i, '"', '"', true);
                 onKey = false;
             }
@@ -152,7 +177,7 @@ public class FirebaseConnector
     }
 
     string ExtractFirstString(string str, ref int iter,
-        char beginChar, char endChar,bool excludeBoundary)
+        char beginChar, char endChar, bool excludeBoundary)
     {
         bool onSelecting = false;
         int firstIndex = iter;
@@ -168,7 +193,7 @@ public class FirebaseConnector
                     if (nestDepth == 0)
                     {
                         int charCnt = iter - firstIndex + 1;
-                        if(excludeBoundary)
+                        if (excludeBoundary)
                         {
                             charCnt--;
                         }
