@@ -35,13 +35,13 @@ public class TextFielder : MonoBehaviour
         text.gameObject.SetActive(onDialog);
         if (onDialog)//消える
         {
-            destPos = new Vector2(-150, -370);
+            destPos = new Vector2(-150, -415);
             destColor = new Color(1, 1, 0, 0.6f);
             text.text = s;
         }
         else
         {
-            destPos = new Vector2(-150, -470);
+            destPos = new Vector2(-150, -485);
             destColor = new Color(1, 1, 0, 0);
         }
 

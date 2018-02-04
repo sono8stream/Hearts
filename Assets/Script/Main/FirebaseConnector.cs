@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System;
 using UnityEngine;
 using Firebase;
 using Firebase.Database;
@@ -8,6 +9,7 @@ using Firebase.Unity.Editor;
 public class FirebaseConnector
 {
     public Dictionary<string, object> dataMap;
+    public Action DatabaseErrored;
 
     DatabaseReference myReference;
     public DatabaseReference MyReference { get { return myReference; } }
@@ -17,6 +19,8 @@ public class FirebaseConnector
     Dictionary<string, object> readDataMap;
     bool readCompleted;
     bool isReadOnly;
+    int accessLim;//エラー判定するまでのアクセス限界数
+    int accessCounter;
 
     void Initialize()
     {
@@ -24,6 +28,8 @@ public class FirebaseConnector
             "https://unitytablegame.firebaseio.com/");
         dataMap = new Dictionary<string, object>();
         snapData = null;
+        accessLim = 30;
+        accessCounter = 0;
     }
 
     public FirebaseConnector(string referenceName, bool readOnly = false)
@@ -84,11 +90,19 @@ public class FirebaseConnector
             }
             else if (task.IsCompleted)
             {
-                if (!nullable && task.Result == null)
+                if (!nullable && task.Result.Value == null)
                 {
                     ReadQuery(path);
+                    accessCounter++;
+                    Debug.Log(accessCounter);
+                    if (accessCounter >= accessLim)
+                    {
+                        DatabaseErrored();
+                        //Application.Quit();
+                    }
                     return;
                 }
+                accessCounter = 0;
                 snapData = task.Result;
                 readCompleted = true;
                 //Debug.Log(snapData);

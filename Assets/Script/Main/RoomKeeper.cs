@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class RoomKeeper : MonoBehaviour
@@ -26,10 +27,17 @@ public class RoomKeeper : MonoBehaviour
     void Start()
     {
         textFielder.StartCoroutine(textFielder.SwitchDialog(true, string.Format(
-                "ようこそ。あなたの名前は何だい？({0}文字以内)", nameMaxLength)));
+                "ようこそ。早速だが、あなたの名前は何だい？({0}文字以内)", nameMaxLength)));
         textFielder.CleanInputField("名前を入力してね", "testPlayer");
 
         connector = new FirebaseConnector("Rooms");
+        connector.MyReference.ChildRemoved
+     += (object sender, Firebase.Database.ChildChangedEventArgs args) =>
+     {
+         if (stateNo != (int)KeeperState.Idle) return;
+
+         InterruptGame();
+     };
         stateNo = (int)KeeperState.NameReception;
     }
 
@@ -53,15 +61,15 @@ public class RoomKeeper : MonoBehaviour
             case (int)KeeperState.RoomReception:
                 roomName = textFielder.GetMessage();
                 if (roomName == null) return;
-
-                connector.ReadQuery(roomName + "/" + playersDir,true);
+                Debug.Log(roomName);
+                connector.ReadQuery(roomName + "/" + playersDir, true);
                 stateNo = (int)KeeperState.Inquiry;
                 textFielder.StartCoroutine(textFielder.SwitchDialog(true,
                     "問い合わせ中..."));
                 break;
 
             case (int)KeeperState.Inquiry:
-                if (connector.SnapData==null) return;
+                if (connector.SnapData == null) return;
 
                 if (connector.SnapData.Value == null)
                 {
@@ -69,6 +77,16 @@ public class RoomKeeper : MonoBehaviour
                     playerNo = 0;
                     roomParent = true;
                     stateNo = (int)KeeperState.Wanting;
+                }
+                else if (connector.SnapData.ChildrenCount >= GameMaster.maxPlayers)
+                {
+                    textFielder.StartCoroutine(textFielder.SwitchDialog(true, string.Format(
+                        "おっと、そこは満席みたいだな。他の部屋はどうだい。({0}文字以内)",
+                        nameMaxLength)));
+                    textFielder.CleanInputField("部屋名を入力してね", roomName);
+                    stateNo = (int)KeeperState.RoomReception;
+                    connector.RemoveReadData();
+                    return;
                 }
                 else
                 {
@@ -78,7 +96,9 @@ public class RoomKeeper : MonoBehaviour
                     stateNo = (int)KeeperState.PlayWaiting;
                 }
 
-                connector.AddAsync(roomName + "/" + playersDir + "/" + playerNo, playerName);
+                connector.RemoveReadData();
+                connector.AddAsync(roomName + "/" + playersDir + "/" + playerNo.ToString(),
+                    playerName);
                 break;
 
             case (int)KeeperState.Wanting:
@@ -92,9 +112,20 @@ public class RoomKeeper : MonoBehaviour
                 break;
 
             case (int)KeeperState.SetupGameMaster:
+                if (playerNameArray.Length > GameMaster.maxPlayers)
+                {
+                    playerNameArray = playerNameArray.Take(GameMaster.maxPlayers).ToArray();
+                }
                 master.InitializeDB(nowPlayerCnt, roomParent, playerNameArray, playerNo,
                     connector.MyReference.Child(roomName + "/Master"));
                 stateNo = (int)KeeperState.Idle;
+                connector.MyReference.Child(roomName + "/" + playersDir).ValueChanged
+             += (object sender, Firebase.Database.ValueChangedEventArgs args) =>
+             {
+                 if (stateNo != (int)KeeperState.Idle) return;
+
+                 InterruptGame();
+             };
                 break;
         }
     }
@@ -104,13 +135,15 @@ public class RoomKeeper : MonoBehaviour
     /// </summary>
     void OnApplicationQuit()
     {
+        if (roomName == null) return;
+
         if (roomParent)
         {
             connector.RemoveItem(roomName);
         }
         else
         {
-            connector.RemoveItem(roomName + "/" + playersDir + "/" + playerNo);
+            connector.RemoveItem(roomName + "/" + playersDir + "/" + playerNo.ToString());
             connector.RemoveItem(roomName + "/Player" + playerNo.ToString());
         }
     }
@@ -126,19 +159,21 @@ public class RoomKeeper : MonoBehaviour
                     return;
                 }
 
+                if (stateNo != (int)KeeperState.Wanting) return;
+
                 playerNameArray = connector.GetChildrenValueString(args.Snapshot);
                 nowPlayerCnt = (int)args.Snapshot.ChildrenCount;
-                if (nowPlayerCnt >= 3)
+                if (nowPlayerCnt >= GameMaster.minPlayers)
                 {
                     textFielder.StartCoroutine(textFielder.SwitchDialog(true,
-                 roomName + "を用意しておいたぜ。参加者募集中。(現在" + nowPlayerCnt + "人)"));
+                 roomName + "を用意しておいたぜ。参加者募集中だ。(現在" + nowPlayerCnt + "人)"));
                     textFielder.CleanInputField("Sでゲーム開始");
                     onReady = true;
                 }
                 else
                 {
                     textFielder.StartCoroutine(textFielder.SwitchDialog(true,
-                 roomName + "を用意しておいたぜ。参加者募集中。(現在" + nowPlayerCnt + "人)"));
+                 roomName + "を用意しておいたぜ。参加者募集中だ。(現在" + nowPlayerCnt + "人)"));
                 }
 
                 Debug.Log(nowPlayerCnt);
@@ -183,6 +218,17 @@ public class RoomKeeper : MonoBehaviour
 
                 Debug.Log(nowPlayerCnt);
             };
+    }
+
+    void InterruptGame()
+    {
+        master.Initialize();
+        stateNo = (int)KeeperState.RoomReception;
+        textFielder.StartCoroutine(textFielder.SwitchDialog(true, string.Format(
+                        "誰かがいなくなったみたいだな。他の部屋はどうだい。({0}文字以内)",
+                        nameMaxLength)));
+        textFielder.CleanInputField("部屋名を入力してね", "TestRoom");
+        connector.RemoveItem(roomName);
     }
 }
 

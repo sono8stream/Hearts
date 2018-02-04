@@ -14,6 +14,9 @@ public class CardBox : MonoBehaviour
     }
 
     public bool autoSortable;
+    public bool allFront = false;
+    //public int width;
+    //public int xLim=17;
 
     GameObject cardObjectOrigin;
     List<GameObject> cardObjects;
@@ -87,7 +90,7 @@ public class CardBox : MonoBehaviour
     public void ListView()
     {
         int cardCnt = cardObjects.Count;
-        int width = 50;
+        int width = allFront ? 40 : 20;
         int xLim = Count > 17 ? 17 : Count;
         Vector2 iniPos = Vector2.left * width * (xLim - 1) * 0.5f;
         Vector2 pos = iniPos;
@@ -131,13 +134,18 @@ public class CardBox : MonoBehaviour
     }
     #endregion
 
+    public void Turn(int index)
+    {
+        cards[index].frontFace = !cards[index].frontFace;
+        cardObjects[index].GetComponent<Image>().sprite = cards[index].GetSprite();
+    }
+
     public void TurnAll()
     {
         int cardCnt = cards.Count;
         for (int i = 0; i < cardCnt; i++)
         {
-            cards[i].frontFace = !cards[i].frontFace;
-            cardObjects[i].GetComponent<Image>().sprite = cards[i].GetSprite();
+            Turn(i);
         }
     }
     
@@ -196,6 +204,10 @@ public class CardBox : MonoBehaviour
     #region ListMethods
     public void Add(Card c)
     {
+        if (allFront)
+        {
+            c.frontFace = true;
+        }
         cards.Add(c);
         AddCardObject();
 

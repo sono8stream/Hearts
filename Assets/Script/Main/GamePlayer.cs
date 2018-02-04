@@ -12,6 +12,7 @@ public class GamePlayer : MonoBehaviour
     public int myNo;
     public int stateNo = (int)PlayerState.Idle;
     public CardBox handCards;
+    public CardBox heartBox;
     public string myName;
     public GameMaster master;
     public bool isPlayable;
@@ -19,6 +20,8 @@ public class GamePlayer : MonoBehaviour
 
     [SerializeField]
     Text scoreText;
+    [SerializeField]
+    Text nameText;
 
     CardBox fieldBox;
     int selectIndex;
@@ -40,10 +43,11 @@ public class GamePlayer : MonoBehaviour
         switch (stateNo)
         {
             case (int)PlayerState.SetUp:
-
-                //myDB.GetReadData(ref snapshot);
+                
                 if (myDB.SnapData == null) return;
 
+                handCards.allFront = /*isPlayable*/true;
+                heartBox.allFront = true;
                 DownloadMyHandDB(myDB.SnapData);
                 myDB.RemoveReadData();
                 if (handCards.Count == 0)
@@ -57,14 +61,17 @@ public class GamePlayer : MonoBehaviour
                 stateNo = (int)PlayerState.Idle;
                 break;
             case (int)PlayerState.BeginMyPhase:
-                GetSelectableIndexes();
-                handCards.Highlight(selectableIndexes);
-                handCards.EmphasizeOne(selectableIndexes[selectIndex]);
-                stateNo = (int)PlayerState.MyPhase;
-                if (!isPlayable)
+                if (isPlayable)
+                {
+                    GetSelectableIndexes();
+                    handCards.Highlight(selectableIndexes);
+                    handCards.EmphasizeOne(selectableIndexes[selectIndex]);
+                }
+                else
                 {
                     myDB.ReadQuery(selectDBname);
                 }
+                stateNo = (int)PlayerState.MyPhase;
                 break;
             case (int)PlayerState.MyPhase:
                 if (isPlayable)
@@ -80,17 +87,19 @@ public class GamePlayer : MonoBehaviour
                 else
                 {
                     if (myDB.SnapData == null) return;
-                    else if (int.Parse(myDB.SnapData.GetRawJsonValue()) == -1)
+                    if (int.Parse(myDB.SnapData.GetRawJsonValue()) == -1)
                     {
                         myDB.ReadQuery(selectDBname);
                     }
                     else
                     {
+                        stateNo = (int)PlayerState.EndMyPhase;
                         handCards.MoveTo(ref fieldBox,
                             int.Parse(myDB.SnapData.GetRawJsonValue()));
                         fieldBox.ListView();
+                        handCards.ListView();
                         myDB.Push(queryCountDBname, master.ClientNo.ToString());
-                        stateNo = (int)PlayerState.Idle;
+                        myDB.ReadQuery(selectDBname);
                     }
                     myDB.RemoveReadData();
                 }
@@ -98,19 +107,31 @@ public class GamePlayer : MonoBehaviour
             case (int)PlayerState.EndMyPhase:
                 //return;
                 if (myDB.SnapData == null) return;
-                else if (myDB.SnapData.ChildrenCount < master.PlayerCnt)
+                if (isPlayable)
                 {
-                    myDB.ReadQuery(queryCountDBname);
+                    if (myDB.SnapData.ChildrenCount < master.PlayerCnt)
+                    {
+                        myDB.ReadQuery(queryCountDBname);
+                    }
+                    else
+                    {
+                        selectIndex = 0;
+                        Debug.Log("idle");
+                        stateNo = (int)PlayerState.Idle;
+                        myDB.AddAsync(selectDBname, -1);
+                        Debug.Log(myDB.SnapData.ChildrenCount);
+                    }
                 }
                 else
                 {
-                    selectIndex = 0;
-                    Debug.Log("idle");
-                    stateNo = (int)PlayerState.Idle;
-                    handCards.ListView();
-                    myDB.AddAsync(selectDBname, -1);
-                    Debug.Log(myDB.SnapData.ChildrenCount);
-                    myDB.RemoveItem(queryCountDBname);
+                    if (int.Parse(myDB.SnapData.GetRawJsonValue()) != -1)
+                    {
+                        myDB.ReadQuery(selectDBname);
+                    }
+                    else
+                    {
+                        stateNo = (int)PlayerState.Idle;
+                    }
                 }
                 myDB.RemoveReadData();
                 break;
@@ -127,12 +148,12 @@ public class GamePlayer : MonoBehaviour
         isPlayable = playable;
         myName = name;
         myDB = new FirebaseConnector(playerReference, !playable);
+        nameText.text = name;
         if (isPlayable)
         {
             Debug.Log("playable!");
             myDB.AddAsync("Name", myName);
             myDB.AddAsync(selectDBname, -1);
-            //myDB.AddAsync(queryCountDBname,)
         }
     }
 
@@ -182,8 +203,10 @@ public class GamePlayer : MonoBehaviour
         }
         if (Input.GetKeyDown(KeyCode.Space))
         {
+            handCards.Turn(selectableIndexes[selectIndex]);
             handCards.MoveTo(ref fieldBox, selectableIndexes[selectIndex]);
             fieldBox.ListView();
+            handCards.ListView();
             UploadMyHandDB();
             Debug.Log("Summon");
             return true;
@@ -204,29 +227,24 @@ public class GamePlayer : MonoBehaviour
             //Debug.Log(string.Format("{0}:{1}", markNo, value));
             handCards.Add(new Card(markNo, value));
         }
-        handCards.SyncCardObjects();
-        handCards.TurnAll();
+        //handCards.SyncCardObjects();
     }
 
     void UploadMyHandDB()
     {
-        /*Dictionary<string, object> handMap = new Dictionary<string, object>();
-        int handCnt = handCards.Count;
-        for (int i = 0;i < handCnt; i++)
-        {
-            Dictionary<string, object> itemMap = new Dictionary<string, object>();
-            itemMap.Add("markNo", handCards[i].markNo);
-            itemMap.Add("value", handCards[i].value);
-            handMap.Add("card" + i.ToString(), itemMap);
-        }*/
-
-        myDB.AddAsync(handDBname,/*handMap*/handCards.CardListDictionary());
-        //myDB.AsyncMap();
+        myDB.AddAsync(handDBname,handCards.CardListDictionary());
     }
 
-    public void AddScore(int point)
+    public void AddScore()
     {
-        nowGameScore += point;
+        int score = heartBox.CountAll((c) => { return c.markNo == (int)MarkName.heart; });
+
+        if (heartBox.IndexListWhere(
+            (c) => { return c.IsMatch((int)MarkName.spade, 12); }).Count > 0)
+        {
+            score += 12;
+        }
+        nowGameScore += score;
         scoreText.text = nowGameScore.ToString();
     }
 }

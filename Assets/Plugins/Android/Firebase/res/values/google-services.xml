@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+  <string name="firebase_database_url" translatable="false">https://unitytablegame.firebaseio.com</string>
+  <string name="gcm_defaultSenderId" translatable="false">1001978184694</string>
+  <string name="google_storage_bucket" translatable="false">unitytablegame.appspot.com</string>
+  <string name="project_id" translatable="false">unitytablegame</string>
+  <string name="google_api_key" translatable="false">AIzaSyAn8ngzvyWyGxYp7xl6ZMj9TeyK-Re1R54</string>
+  <string name="google_crash_reporting_api_key" translatable="false">AIzaSyAn8ngzvyWyGxYp7xl6ZMj9TeyK-Re1R54</string>
+  <string name="google_app_id" translatable="false">1:1001978184694:android:881b05abb7bbc22d</string>
+  <string name="default_web_client_id" translatable="false">1001978184694-6fpe6d8bm511auqufieof06oh8i3q5ou.apps.googleusercontent.com</string>
+</resources>

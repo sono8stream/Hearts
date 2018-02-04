@@ -9,8 +9,8 @@ public class GameMaster : MonoBehaviour
     public CardBox fieldCards;
     public bool onHeartBreak;
 
-    const int minPlayers = 3;
-    const int maxPlayers = 6;
+    public const int minPlayers = 3;
+    public const int maxPlayers = 4;
 
     [SerializeField]
     CardBox deckCards;
@@ -37,8 +37,7 @@ public class GameMaster : MonoBehaviour
     // Use this for initialization
     void Start()
     {
-        playCnt = 0;
-        stateNo = (int)MasterState.Idle;
+        Initialize();
     }
 
     // Update is called once per frame
@@ -134,7 +133,7 @@ public class GameMaster : MonoBehaviour
         {
             AddTrumpSetToDeck();
             deckCards.SyncCardObjects();
-            deckCards.TurnAll();
+            //deckCards.TurnAll();
             ExcludeCards();
             ServeCards(true);
         }
@@ -147,6 +146,8 @@ public class GameMaster : MonoBehaviour
         nowPlayerNo = (playerCnt - clientNo) % playerCnt;
         lastPlayerNo = nowPlayerNo == 0 ? playerCnt - 1 : nowPlayerNo - 1;
         stateNo = (int)MasterState.SetUp;
+        fieldCards.allFront = true;
+        talonCards.allFront = true;
     }
 
     #region Setup Methods
@@ -211,8 +212,8 @@ public class GameMaster : MonoBehaviour
             g.transform.SetParent(transform.parent);
 
             g.transform.localPosition = (Vector2)playerPoses[i];
-            g.transform.localEulerAngles = Vector3.forward * playerPoses[i].z;
-            g.transform.Find("hand").localEulerAngles = Vector3.zero;
+            //g.transform.localEulerAngles = Vector3.forward * playerPoses[i].z;
+            //g.transform.Find("Text").eulerAngles = Vector3.zero;
             g.transform.localScale = Vector3.one;
             GamePlayer player = g.GetComponent<GamePlayer>();
 
@@ -228,7 +229,7 @@ public class GameMaster : MonoBehaviour
     Vector3[] SetPlayerPoses()
     {
         List<Vector3> poses = new List<Vector3>();
-        poses.Add(new Vector3(0, -180, 0));
+        poses.Add(new Vector3(0, -200, 0));
         poses.Add(new Vector3(800, 150, 90));
         poses.Add(new Vector3(-800, 150, 270));
 
@@ -255,7 +256,7 @@ public class GameMaster : MonoBehaviour
     {
         FirebaseConnector tempConnector = new FirebaseConnector(connector.MyReference.Parent);
         trickLimit = deckCards.Count / playerCnt;
-        for(int i = 0; i < playerCnt; i++)
+        for (int i = 0; i < playerCnt; i++)
         {
             Dictionary<string, object> cardDict = new Dictionary<string, object>();
             for (int j = 0; j < trickLimit; j++)
@@ -264,6 +265,7 @@ public class GameMaster : MonoBehaviour
                 cardDict.Add(Card.dbName + j.ToString(), deckCards[index].DataDictionary());
                 deckCards.RemoveAt(index);
             }
+
             tempConnector.AddAsync(string.Format("Player{0}/{1}", i, GamePlayer.handDBname),
                 cardDict);
         }
@@ -273,7 +275,7 @@ public class GameMaster : MonoBehaviour
     void EndTrick()
     {
         nowPlayerNo = TrickWinnerIndex();
-        players[nowPlayerNo].AddScore(GivenScore(nowPlayerNo));
+        GiveHearts(nowPlayerNo);
         //lastPlayerNo = (nowPlayerNo + playerCnt - 1) % playerCnt;
         lastPlayerNo = nowPlayerNo == 0 ? playerCnt - 1 : nowPlayerNo - 1;
         DiscardFieldCards();
@@ -299,18 +301,20 @@ public class GameMaster : MonoBehaviour
         return (firstPlayerNo + index) % playerCnt;
     }
 
-    int GivenScore(int winnerIndex)
+    void GiveHearts(int winnerIndex)
     {
-        int score = 0;
-        score += fieldCards.CountAll((c) => { return c.markNo == (int)MarkName.heart; });
-
-        if (fieldCards.IndexListWhere(
-            (c) => { return c.IsMatch((int)MarkName.spade, 12); }).Count > 0)
+        List<int> givenCardIndexes = fieldCards.IndexListWhere(
+            (c) =>
+            {
+                return c.IsMatch((int)MarkName.spade, 12)
+           || c.markNo == (int)MarkName.heart;
+            });
+        int givenCnt = givenCardIndexes.Count;
+        for (int i = 0; i < givenCnt; i++)
         {
-            score += 12;
+            fieldCards.MoveTo(ref players[winnerIndex].heartBox, givenCardIndexes[i]);
         }
-
-        return score;
+        players[winnerIndex].heartBox.ListView();
     }
 
     void DiscardFieldCards()
@@ -319,6 +323,16 @@ public class GameMaster : MonoBehaviour
         for (int i = 0; i < fieldCardsCnt; i++)
         {
             fieldCards.MoveTo(ref talonCards, 0);
+        }
+    }
+
+    public void Initialize()
+    {
+        playCnt = 0;
+        stateNo = (int)MasterState.Idle;
+        for (int i = 0; i < playCnt; i++)
+        {
+            Destroy(players[i].gameObject);
         }
     }
 }
