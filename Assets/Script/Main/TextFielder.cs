@@ -58,6 +58,8 @@ public class TextFielder : MonoBehaviour
         InputField input = inputField.GetComponent<InputField>();
         messageCash = input.text;
         input.text = "";
+        GameObject.Find(SoundPlayer.objectName).GetComponent<SoundPlayer>().PlaySE(
+            SEname.Enter);
     }
 
     public string GetMessage()

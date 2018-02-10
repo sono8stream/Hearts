@@ -46,7 +46,7 @@ public class GamePlayer : MonoBehaviour
                 
                 if (myDB.SnapData == null) return;
 
-                handCards.allFront = /*isPlayable*/true;
+                handCards.allFront = isPlayable;
                 heartBox.allFront = true;
                 DownloadMyHandDB(myDB.SnapData);
                 myDB.RemoveReadData();
@@ -155,6 +155,8 @@ public class GamePlayer : MonoBehaviour
             myDB.AddAsync("Name", myName);
             myDB.AddAsync(selectDBname, -1);
         }
+        transform.Find("Chatter").GetComponent<Chatter>().InitializeChatDB(
+            playerReference.Child("Chat"), playable);
     }
 
     void PrepareNewPlay()
@@ -235,15 +237,29 @@ public class GamePlayer : MonoBehaviour
         myDB.AddAsync(handDBname,handCards.CardListDictionary());
     }
 
-    public void AddScore()
+    //scoreが25でtrue、shoot the moon
+    public bool CalculateScore()
     {
         int score = heartBox.CountAll((c) => { return c.markNo == (int)MarkName.heart; });
-
         if (heartBox.IndexListWhere(
             (c) => { return c.IsMatch((int)MarkName.spade, 12); }).Count > 0)
         {
             score += 12;
         }
+        heartBox.RemoveAll((x) => true);
+        if (score == 25)
+        {//Shoot the moon
+            return true;
+        }
+        else
+        {
+            AddScore(score);
+            return false;
+        }
+    }
+
+    public void AddScore(int score)
+    {
         nowGameScore += score;
         scoreText.text = nowGameScore.ToString();
     }

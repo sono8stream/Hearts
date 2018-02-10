@@ -6,11 +6,11 @@ using UnityEngine;
 static class EnumHelper
 {
 
-    public static string Name<Type>(this int markNo) where Type : struct
+    public static string Name<Type>(this int index) where Type : struct
     {
-        if (Enum.IsDefined(typeof(Type), markNo))
+        if (Enum.IsDefined(typeof(Type), index))
         {
-            return Enum.GetName(typeof(Type), markNo);
+            return Enum.GetName(typeof(Type), index);
         }
         else
         {
@@ -22,9 +22,4 @@ static class EnumHelper
     {
         return Enum.GetNames(typeof(Type)).Length;
     }
-
-    /*public static int No<Type>(this Type type) where Type : struct
-    {
-        return (int)Enum.Parse(typeof(Type), type.ToString());
-    }*/
 }

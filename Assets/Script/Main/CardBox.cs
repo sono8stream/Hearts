@@ -90,7 +90,7 @@ public class CardBox : MonoBehaviour
     public void ListView()
     {
         int cardCnt = cardObjects.Count;
-        int width = allFront ? 40 : 20;
+        int width = allFront ? 30 : 10;
         int xLim = Count > 17 ? 17 : Count;
         Vector2 iniPos = Vector2.left * width * (xLim - 1) * 0.5f;
         Vector2 pos = iniPos;
@@ -104,7 +104,6 @@ public class CardBox : MonoBehaviour
             cardObjects[i].transform.localEulerAngles = Vector3.zero;
             pos += Vector2.right * width;
         }
-        Debug.Log("Listed");
     }
 
     public void EmphasizeOne(int index)
@@ -287,6 +286,8 @@ public class CardBox : MonoBehaviour
     {
         box.Add(cards[cardIndex]);
         RemoveAt(cardIndex);
+        GameObject.Find(SoundPlayer.objectName).GetComponent<SoundPlayer>().PlaySE(
+            SEname.Turn);
     }
 
     #region Linq like Methods

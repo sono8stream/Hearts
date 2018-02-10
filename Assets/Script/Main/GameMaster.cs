@@ -19,7 +19,7 @@ public class GameMaster : MonoBehaviour
 
     int trickCnt;
     int trickLimit;
-    int playerCnt = 4;
+    int playerCnt = 0;
     public int PlayerCnt { get { return playerCnt; } }
     int nowPlayerNo;
     int lastPlayerNo;
@@ -81,6 +81,12 @@ public class GameMaster : MonoBehaviour
                 trickCnt++;
                 if (trickCnt >= trickLimit)
                 {
+                    int shootedScore = 0;
+                    for (int i = 0; i < playerCnt; i++)
+                    {
+                        if (players[i].CalculateScore()) { shootedScore = 26; }
+                        else { players[i].AddScore(shootedScore); }
+                    }
                     NewPlay();
                 }
                 else
@@ -123,6 +129,8 @@ public class GameMaster : MonoBehaviour
         InvitePlayers(nameArray, clientNo);
         this.clientNo = clientNo;
         NewPlay();
+        GameObject.Find(SoundPlayer.objectName).GetComponent<SoundPlayer>().PlayBGM(
+            BGMname.Main);
     }
 
     void NewPlay()
@@ -212,8 +220,18 @@ public class GameMaster : MonoBehaviour
             g.transform.SetParent(transform.parent);
 
             g.transform.localPosition = (Vector2)playerPoses[i];
-            //g.transform.localEulerAngles = Vector3.forward * playerPoses[i].z;
-            //g.transform.Find("Text").eulerAngles = Vector3.zero;
+            
+            if (playerPoses[i].z == 90)//boxオブジェクトを下に
+            {
+                g.transform.Find("Box").localPosition = Vector3.down * 240;
+            }
+            else if (playerPoses[i].z == 180)//chatterオブジェクトを下に
+            {
+                g.transform.Find("Box").localPosition += Vector3.down * 150;
+                g.transform.Find("Box").localPosition += Vector3.left * 50;
+                g.transform.Find("Chatter").localPosition = Vector3.down * 210;
+
+            }
             g.transform.localScale = Vector3.one;
             GamePlayer player = g.GetComponent<GamePlayer>();
 
@@ -229,23 +247,23 @@ public class GameMaster : MonoBehaviour
     Vector3[] SetPlayerPoses()
     {
         List<Vector3> poses = new List<Vector3>();
-        poses.Add(new Vector3(0, -200, 0));
-        poses.Add(new Vector3(800, 150, 90));
-        poses.Add(new Vector3(-800, 150, 270));
+        poses.Add(new Vector3(-200, -320, 0));
+        poses.Add(new Vector3(700, 150, 90));
+        poses.Add(new Vector3(-700, 150, 90));
 
         if (playerCnt >= 4)
         {
-            poses.Insert(2, new Vector3(0, 550, 180));
+            poses.Insert(2, new Vector3(-200, 550, 180));
 
             if (playerCnt >= 5)
             {
-                poses[0] = new Vector3(-350, -180, 0);
-                poses.Insert(1, new Vector3(350, -180, 0));
+                poses[0] = new Vector3(-650, -320, 0);
+                poses.Insert(1, new Vector3(310, -250, 0));
 
                 if (playerCnt == maxPlayers)
                 {
-                    poses[3] = new Vector3(-350, 550, 180);
-                    poses.Insert(3, new Vector3(350, 550, 180));
+                    poses[3] = new Vector3(-650, 550, 180);
+                    poses.Insert(3, new Vector3(310, 550, 180));
                 }
             }
         }
@@ -310,9 +328,10 @@ public class GameMaster : MonoBehaviour
            || c.markNo == (int)MarkName.heart;
             });
         int givenCnt = givenCardIndexes.Count;
+
         for (int i = 0; i < givenCnt; i++)
         {
-            fieldCards.MoveTo(ref players[winnerIndex].heartBox, givenCardIndexes[i]);
+            fieldCards.MoveTo(ref players[winnerIndex].heartBox, givenCardIndexes[i] - i);
         }
         players[winnerIndex].heartBox.ListView();
     }
@@ -328,12 +347,13 @@ public class GameMaster : MonoBehaviour
 
     public void Initialize()
     {
-        playCnt = 0;
-        stateNo = (int)MasterState.Idle;
-        for (int i = 0; i < playCnt; i++)
+        for (int i = 0; i < playerCnt; i++)
         {
             Destroy(players[i].gameObject);
         }
+        playerCnt = 0;
+        playCnt = 0;
+        stateNo = (int)MasterState.Idle;
     }
 }
 
